@@ -16,14 +16,14 @@ dvol () {
     create)
       docker run -it --name dvol ${VOLUME_CONTAINER} ;;
     destroy)
-      docker rm dvol ;;
+      docker rm -v dvol ;;
   esac
 }
 
 dbox () {
   case $1 in
     create)
-      docker run -it --name dbox -h dbox --volumes-from dvol ${DEV_CONTAINER} ;;
+      docker run -it --name $2 -h dbox --volumes-from dvol ${DEV_CONTAINER} ;;
     destroy)
       if [ `docker inspect --format '{{.State.Running}}' $2` = 'true' ]; then
         docker stop $2 && docker rm $2
@@ -35,5 +35,9 @@ dbox () {
 
 dbackup () {
   [ -d /home/core/backup ] || mkdir /home/core/backup && chmod 777 /home/core/backup
-  docker run --volumes-from dvol -v /home/core/backup:/backup yarnhoj/dbox tar cvf /backup/bu.tar $1
+  docker run -it --rm --volumes-from dvol -v /home/core/backup:/backup yarnhoj/dbox tar cvf /backup/bu.tar $1
+}
+
+drestore () {
+	docker run -it --rm --volumes-from dvol -v /home/core/backup:/backup yarnhoj/dbox tar xvf /backup/bu.tar $1
 }
